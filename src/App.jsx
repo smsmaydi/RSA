@@ -131,7 +131,7 @@ function App() {
               </div>
             </div>
           </div>
-          <KeyGenVisualization keys={keys} error={error} />
+          <KeyGenVisualization keys={keys} error={error} inputPreview={{ p: pStr, q: qStr, e: eStr }} />
         </section>
 
         <section className={styles.section}>
@@ -139,7 +139,7 @@ function App() {
           <p className={styles.hint}>
             Enter plain text. Encrypted as c = m<sup>e</sup> mod n, decrypted as m = c<sup>d</sup> mod n.
           </p>
-          <EncryptDecryptVisualization keys={keys} />
+          <EncryptDecryptVisualization keys={keys} keysError={error} />
         </section>
       </main>
 

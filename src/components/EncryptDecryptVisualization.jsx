@@ -100,7 +100,21 @@ function BlockFormulaList({ label, bases, exp, n, results }) {
   )
 }
 
-export function EncryptDecryptVisualization({ keys }) {
+function FormulaPlaceholder({ label }) {
+  return (
+    <div className={styles.step}>
+      <span className={styles.stepLabel}>{label}</span>
+      <code className={styles.bigCode}>—</code>
+    </div>
+  )
+}
+
+/**
+ * @param {object} props
+ * @param {object | null} props.keys
+ * @param {string | null} [props.keysError] - Message from key generation when keys are invalid.
+ */
+export function EncryptDecryptVisualization({ keys, keysError }) {
   const [message, setMessage] = React.useState('Hello')
   const [showAsciiTable, setShowAsciiTable] = React.useState(false)
   const [plainBlocks, setPlainBlocks] = React.useState([])
@@ -153,21 +167,22 @@ export function EncryptDecryptVisualization({ keys }) {
     }
   }, [keys, message])
 
-  if (!keys) {
-    return (
-      <div className={styles.card}>
-        <p className={styles.placeholder}>Generate keys first.</p>
-      </div>
-    )
-  }
-
   const blockNote =
-    message.length === 0
-      ? 'Empty message.'
-      : `${plainBlocks.length} block${plainBlocks.length === 1 ? '' : 's'} · up to ${charsPerBlock} character${charsPerBlock === 1 ? '' : 's'} per block (each value less than n = ${keys.n.toString()}).`
+    !keys
+      ? null
+      : message.length === 0
+        ? 'Empty message.'
+        : `${plainBlocks.length} block${plainBlocks.length === 1 ? '' : 's'} · up to ${charsPerBlock} character${charsPerBlock === 1 ? '' : 's'} per block (each value less than n = ${keys.n.toString()}).`
 
   return (
     <div className={styles.wrapper}>
+      {!keys && (
+        <div className={styles.keysHint} role="status">
+          {keysError
+            ? 'Fix the key values in section 1 to enable encryption steps.'
+            : 'Enter valid p, q, and e in section 1 to see ciphertext and decryption here.'}
+        </div>
+      )}
       {error && <div className={styles.error}>{error}</div>}
       <div className={styles.inputRow}>
         <label className={styles.label}>Plain text</label>
@@ -213,30 +228,38 @@ export function EncryptDecryptVisualization({ keys }) {
       </div>
 
       <div className={styles.flow}>
-        {message.length > 0 && !error && (
+        {keys && message.length > 0 && !error && blockNote && (
           <p className={styles.blockBanner}>{blockNote}</p>
         )}
         <BlockList label="m (as number, per block)" values={plainBlocks} />
         <div className={styles.arrow}>
           <span>c = m<sup>e</sup> mod n (per block)</span>
         </div>
-        <BlockFormulaList
-          label="c (ciphertext, per block)"
-          bases={plainBlocks}
-          exp={keys.publicKey.e}
-          n={keys.n}
-          results={cipherBlocks}
-        />
+        {keys ? (
+          <BlockFormulaList
+            label="c (ciphertext, per block)"
+            bases={plainBlocks}
+            exp={keys.publicKey.e}
+            n={keys.n}
+            results={cipherBlocks}
+          />
+        ) : (
+          <FormulaPlaceholder label="c (ciphertext, per block)" />
+        )}
         <div className={styles.arrow}>
           <span>m = c<sup>d</sup> mod n (per block)</span>
         </div>
-        <BlockFormulaList
-          label="m (decrypted, per block)"
-          bases={cipherBlocks}
-          exp={keys.privateKey.d}
-          n={keys.n}
-          results={decryptedBlocks}
-        />
+        {keys ? (
+          <BlockFormulaList
+            label="m (decrypted, per block)"
+            bases={cipherBlocks}
+            exp={keys.privateKey.d}
+            n={keys.n}
+            results={decryptedBlocks}
+          />
+        ) : (
+          <FormulaPlaceholder label="m (decrypted, per block)" />
+        )}
         <div className={styles.stepHighlight} style={{ marginTop: '2em' }}>
           <span className={styles.stepLabel}>Decrypted text</span>
           <code className={styles.resultText}>{decryptedText || (message.length === 0 ? '—' : '')}</code>

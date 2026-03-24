@@ -25,6 +25,16 @@
   border: 1px solid var(--accent-red);
 }
 
+.keysHint {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  padding: 0.65rem 0.75rem;
+  background: rgba(88, 166, 255, 0.08);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  line-height: 1.45;
+}
+
 .inputRow {
   display: flex;
   flex-direction: column;
