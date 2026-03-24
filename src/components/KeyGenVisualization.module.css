@@ -218,6 +218,14 @@
   padding: 0;
 }
 
+.dStepEllipsis {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  text-align: center;
+  margin: 0.5rem 0;
+  font-style: italic;
+}
+
 @media (max-width: 640px) {
   .keys {
     grid-template-columns: 1fr;

@@ -4,11 +4,30 @@ import { KeyGenVisualization } from './components/KeyGenVisualization'
 import { EncryptDecryptVisualization } from './components/EncryptDecryptVisualization'
 import styles from './App.module.css'
 
+/** Keep only ASCII digits 0–9 (for p, q, e inputs). */
+function digitsOnly(value) {
+  return value.replace(/\D/g, '')
+}
+
+/**
+ * Main app component: RSA key generation and encryption/decryption UI.
+ * Holds the inputs p, q, e as strings; derives the key pair (or error) via useMemo,
+ * and passes them to KeyGenVisualization and EncryptDecryptVisualization.
+ */
 function App() {
+  /** User input for first prime p (string for the input field). */
   const [pStr, setPStr] = useState('61')
+  /** User input for second prime q. */
   const [qStr, setQStr] = useState('53')
+  /** User input for public exponent e. */
   const [eStr, setEStr] = useState('17')
 
+  /**
+   * Runs key generation whenever pStr, qStr, or eStr change.
+   * Converts to BigInt and calls generateKeys(p, q, e).
+   * On invalid input or key-generation error, returns { error: string }.
+   * @type {Object | { error: string }} Key pair object or error object.
+   */
   const keyResult = useMemo(() => {
     try {
       const p = BigInt(pStr)
@@ -20,11 +39,19 @@ function App() {
     }
   }, [pStr, qStr, eStr])
 
+  /** Resolved key pair (p, q, n, phi, e, d, publicKey, privateKey) or null if error/invalid. */
   const keys = keyResult && 'n' in keyResult ? keyResult : null
+  /** Error message from key generation, or null. */
   const error = keyResult && 'error' in keyResult ? keyResult.error : null
 
+  /** Fills p with a random prime from the demo list. */
   const handleRandomP = () => setPStr(getRandomPrime().toString())
+  /** Fills q with a random prime different from the current p. */
   const handleRandomQ = () => setQStr(getRandomPrimeExcluding(BigInt(pStr || '2')).toString())
+  /**
+   * Fills e with a random valid exponent: if p and q are valid, uses getRandomE(phi),
+   * otherwise picks randomly from 3, 17, 65537.
+   */
   const handleRandomE = () => {
     try {
       const p = BigInt(pStr)
@@ -62,8 +89,11 @@ function App() {
               <div className={styles.inputWithButton}>
                 <input
                   type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  autoComplete="off"
                   value={pStr}
-                  onChange={(e) => setPStr(e.target.value)}
+                  onChange={(e) => setPStr(digitsOnly(e.target.value))}
                   className={styles.input}
                 />
                 <button type="button" className={styles.randomBtn} onClick={handleRandomP} title="Random prime">Random</button>
@@ -74,8 +104,11 @@ function App() {
               <div className={styles.inputWithButton}>
                 <input
                   type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  autoComplete="off"
                   value={qStr}
-                  onChange={(e) => setQStr(e.target.value)}
+                  onChange={(e) => setQStr(digitsOnly(e.target.value))}
                   className={styles.input}
                 />
                 <button type="button" className={styles.randomBtn} onClick={handleRandomQ} title="Random prime (≠ p)">Random</button>
@@ -86,8 +119,11 @@ function App() {
               <div className={styles.inputWithButton}>
                 <input
                   type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  autoComplete="off"
                   value={eStr}
-                  onChange={(e) => setEStr(e.target.value)}
+                  onChange={(e) => setEStr(digitsOnly(e.target.value))}
                   className={styles.input}
                   placeholder="e.g. 17 or 65537"
                 />

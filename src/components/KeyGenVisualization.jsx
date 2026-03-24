@@ -1,6 +1,33 @@
-import React, { useState } from 'react'
-import { getExtendedGcdSteps } from '../rsa'
+import React, { useState, useMemo } from 'react'
+import { getDByPhiMultiplesSteps } from '../rsa'
 import styles from './KeyGenVisualization.module.css'
+
+/** Show every attempt in the panel; beyond this, show first/last chunk + ellipsis (keeps DOM small for large e). */
+const MAX_INLINE_PHI_ATTEMPTS = 22
+
+function PhiAttemptCard({ row, e }) {
+  const { k, kPhi, plusOne, remainder, divisible } = row
+  return (
+    <div className={divisible ? styles.dStepCardHighlight : styles.dStepCard}>
+      <span className={styles.dStepNum}>k = {k.toString()}</span>
+      <p className={styles.dStepFormula}>
+        {k.toString()}×φ(n) = {kPhi.toString()} → +1 → {plusOne.toString()}
+      </p>
+      <p className={styles.dStepLine}>
+        {plusOne.toString()} mod {e.toString()} = {remainder.toString()}
+        {divisible ? (
+          <>
+            {' '}
+            → divisible by {e.toString()}, so <strong>d</strong> = {plusOne.toString()} ÷ {e.toString()} ={' '}
+            <strong>{(plusOne / e).toString()}</strong>
+          </>
+        ) : (
+          <> → not divisible; try the next k.</>
+        )}
+      </p>
+    </div>
+  )
+}
 
 export function KeyGenVisualization({ keys, error }) {
   const [showDSteps, setShowDSteps] = useState(false)
@@ -22,7 +49,22 @@ export function KeyGenVisualization({ keys, error }) {
   }
 
   const { p, q, n, phi, e, d } = keys
-  const { steps: gcdSteps } = getExtendedGcdSteps(phi, e)
+  const phiMultiples = useMemo(() => getDByPhiMultiplesSteps(phi, e), [phi, e])
+
+  const attemptChunks = useMemo(() => {
+    const { attempts } = phiMultiples
+    if (attempts.length <= MAX_INLINE_PHI_ATTEMPTS) {
+      return { mode: 'all', rows: attempts }
+    }
+    const head = 5
+    const tail = 1
+    return {
+      mode: 'collapsed',
+      headRows: attempts.slice(0, head),
+      skipped: attempts.length - head - tail,
+      tailRows: attempts.slice(-tail),
+    }
+  }, [phiMultiples])
 
   return (
     <div className={styles.wrapper}>
@@ -76,59 +118,42 @@ export function KeyGenVisualization({ keys, error }) {
           <div className={styles.dStepBlock}>
             <span className={styles.dStepTag}>The idea</span>
             <p>
-              We need a number <strong>d</strong> so that when you multiply <strong>e</strong> by <strong>d</strong> and take the remainder after dividing by <strong>φ(n)</strong>, you get 1. In maths: <strong>e · d ≡ 1 (mod φ(n))</strong>. So d is the “inverse” of e in clock arithmetic with φ(n).
+              We need <strong>d</strong> such that <strong>e · d ≡ 1 (mod φ(n))</strong>. That means <strong>e · d = 1 + k · φ(n)</strong> for some whole number <strong>k ≥ 1</strong>. So we list numbers <strong>k · φ(n) + 1</strong> for k = 1, 2, 3, … and stop at the first one that <strong>e</strong> divides exactly; then <strong>d = (k · φ(n) + 1) / e</strong>.
             </p>
           </div>
 
           <div className={styles.dStepBlock}>
-            <span className={styles.dStepTag}>Greatest common divisor (gcd)</span>
+            <span className={styles.dStepTag}>Multiples of φ(n), then +1</span>
             <p>
-              The <strong>greatest common divisor</strong> of two numbers is the largest integer that divides both. For RSA we chose e so that gcd(φ(n), e) = 1 (they have no common factor). The Extended Euclidean Algorithm finds this gcd by repeatedly dividing and keeping the remainder.
+              φ(n) = <strong>{phi.toString()}</strong>, e = <strong>{e.toString()}</strong>. For each k, form <strong>k · φ(n)</strong>, add 1, and check whether the result is divisible by e.
             </p>
           </div>
 
-          <div className={styles.dStepBlock}>
-            <span className={styles.dStepTag}>Step by step</span>
-            <p>
-              We start with <strong>φ(n) = {phi.toString()}</strong> and <strong>e = {e.toString()}</strong>. In each step we divide the bigger by the smaller and take the <strong>remainder</strong>. At the same time we keep a number called the <strong>coefficient of e</strong>: it is the number such that <strong>remainder = φ(n)×(…) + e×(coefficient of e)</strong>. When the remainder becomes <strong>1</strong>, that coefficient (mod φ(n)) is exactly <strong>d</strong>.
-            </p>
-          </div>
-
-          {gcdSteps.map((row, i) => {
-            const isRemainderOne = row.r === 1n
-            return (
-              <div key={row.stepNum} className={isRemainderOne ? styles.dStepCardHighlight : styles.dStepCard}>
-                <span className={styles.dStepNum}>Step {row.stepNum}</span>
-                <p className={styles.dStepLine}>
-                  We divide <strong>φ(n) = {row.phiVal.toString()}</strong> by <strong>e = {row.eVal.toString()}</strong>:
-                </p>
-                <p className={styles.dStepFormula}>
-                  {row.phiVal.toString()} = {row.eVal.toString()} × {row.quotient.toString()} + {row.r.toString()}  →  remainder = <code>{row.r.toString()}</code>
-                </p>
-                <p className={styles.dStepLine}>
-                  The algorithm also computes the <strong>coefficient of e</strong> for this remainder (using the formula: new coefficient = previous − quotient × previous previous). Here: <strong>coefficient of e = {row.coeffE.toString()}</strong>. So we have: remainder {row.r.toString()} = φ(n)×(…) + e×({row.coeffE.toString()}).
-                </p>
-                {isRemainderOne && (
-                  <p className={styles.dStepBridge}>
-                    → Because the remainder is <strong>1</strong>, we get <strong>1 = φ(n)×(…) + e×({row.coeffE.toString()})</strong>, so <strong>e×({row.coeffE.toString()}) ≡ 1 (mod φ(n))</strong>. So the inverse of e modulo φ(n) is {row.coeffE.toString()}. We take it mod φ(n) to get a positive number: <strong>d = {d.toString()}</strong>.
-                  </p>
-                )}
-                {!isRemainderOne && i < gcdSteps.length - 1 && (
-                  <p className={styles.dStepLine}>Next step: we repeat with the smaller number and this remainder.</p>
-                )}
-                {row.r === 0n && (
-                  <p className={styles.dStepLine}>Remainder 0 → we stop. The gcd is the previous remainder (1). The d we need came from the previous step (when remainder was 1).</p>
-                )}
-              </div>
-            )
-          })}
-
-          <div className={styles.dStepBlock}>
-            <span className={styles.dStepTag}>Summary: from the steps to d</span>
-            <p>
-              The divisions give us remainders. The “coefficient of e” is updated each time so that <strong>remainder = φ(n)×(something) + e×(coefficient of e)</strong>. The step where <strong>remainder = 1</strong> is the important one: there we have <strong>1 = e×(coefficient of e) + φ(n)×(something)</strong>, so <strong>e × (coefficient of e) ≡ 1 (mod φ(n))</strong>. So that coefficient is the inverse of e; we write it as a positive number less than φ(n), and that is <strong>d = {d.toString()}</strong>. Check: e × d = {(e * d).toString()}; remainder when divided by φ(n) = {phi.toString()} is {(e * d % phi).toString()} (should be 1).
-            </p>
-          </div>
+          {phiMultiples.d === null ? (
+            <div className={styles.dStepBlock}>
+              <p className={styles.dStepLine}>No suitable k was found (this should not happen for a valid RSA key).</p>
+            </div>
+          ) : (
+            <>
+              {attemptChunks.mode === 'all'
+                ? attemptChunks.rows.map((row) => (
+                    <PhiAttemptCard key={row.k.toString()} row={row} e={e} />
+                  ))
+                : (
+                    <>
+                      {attemptChunks.headRows.map((row) => (
+                        <PhiAttemptCard key={row.k.toString()} row={row} e={e} />
+                      ))}
+                      <p className={styles.dStepEllipsis}>
+                        … {attemptChunks.skipped} more values of k (same pattern: k · φ(n) + 1, then check remainder mod e) …
+                      </p>
+                      {attemptChunks.tailRows.map((row) => (
+                        <PhiAttemptCard key={row.k.toString()} row={row} e={e} />
+                      ))}
+                    </>
+                  )}
+            </>
+          )}
         </div>
       )}
 

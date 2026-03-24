@@ -37,6 +37,13 @@
   color: var(--text-muted);
 }
 
+.encodingHint {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+  margin: 0;
+}
+
 .input {
   font-family: var(--font-mono);
   font-size: 1rem;
@@ -50,6 +57,138 @@
 .input:focus {
   outline: none;
   border-color: var(--accent);
+}
+
+.asciiSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.asciiToggle {
+  align-self: flex-start;
+  font-size: 0.85rem;
+  padding: 0.45rem 0.75rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--accent);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.asciiToggle:hover {
+  border-color: var(--accent);
+  background: rgba(88, 166, 255, 0.08);
+}
+
+.asciiPanel {
+  background: var(--bg-dark);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.75rem 1rem 1rem;
+}
+
+.asciiPanelIntro {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0 0 0.75rem 0;
+  line-height: 1.45;
+}
+
+.asciiGrid {
+  display: grid;
+  grid-template-columns: repeat(16, minmax(0, 1fr));
+  gap: 4px;
+  max-height: 220px;
+  overflow-y: auto;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+}
+
+.asciiCell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 2px;
+  background: var(--bg-card);
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  min-width: 0;
+}
+
+.asciiCellCode {
+  color: var(--text-muted);
+  font-size: 0.65rem;
+}
+
+.asciiCellChar {
+  color: var(--accent-green);
+  font-weight: 600;
+  font-size: 0.72rem;
+  word-break: break-all;
+  text-align: center;
+  line-height: 1.1;
+}
+
+@media (max-width: 640px) {
+  .asciiGrid {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    max-height: 280px;
+  }
+}
+
+.blockBanner {
+  font-size: 0.85rem;
+  color: var(--accent);
+  margin: 0 0 0.5rem 0;
+  padding: 0.5rem 0.75rem;
+  background: rgba(88, 166, 255, 0.08);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.blockList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.blockList li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.blockListIdx {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent-orange);
+  min-width: 4.5rem;
+}
+
+.blockListVal {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  word-break: break-all;
+  color: var(--text);
+}
+
+.formulaSup {
+  font-size: 0.7em;
+  font-weight: 600;
+}
+
+.blockListSingleFormula {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  word-break: break-all;
+  color: var(--text);
 }
 
 .flow {
